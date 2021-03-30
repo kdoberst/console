@@ -73,6 +73,7 @@ import DashboardCard from '@console/shared/src/components/dashboard/dashboard-ca
 import DashboardCardHeader from '@console/shared/src/components/dashboard/dashboard-card/DashboardCardHeader';
 import DashboardCardTitle from '@console/shared/src/components/dashboard/dashboard-card/DashboardCardTitle';
 import DashboardCardBody from '@console/shared/src/components/dashboard/dashboard-card/DashboardCardBody';
+import { RootState } from '../redux';
 
 // Key translations for oauth login templates
 // t('public~Log in to your account')
@@ -888,8 +889,8 @@ const dispatchToProps = (dispatch): PodPagePropsFromDispatch => ({
   setPodMetrics: (metrics) => dispatch(UIActions.setPodMetrics(metrics)),
 });
 
-export const PodsPage = connect<{}, PodPagePropsFromDispatch, PodPageProps>(
-  null,
+export const PodsPage = connect<PodPagePropsFromState, PodPagePropsFromDispatch, PodPageProps>(
+  ({ UI }: RootState) => ({ cluster: UI.get('activeCluster') }),
   dispatchToProps,
 )(
   withUserSettingsCompatibility<
@@ -903,12 +904,14 @@ export const PodsPage = connect<{}, PodPagePropsFromDispatch, PodPageProps>(
   )(
     (
       props: PodPageProps &
+        PodPagePropsFromState &
         PodPagePropsFromDispatch &
         WithUserSettingsCompatibilityProps<TableColumnsType>,
     ) => {
       const {
         canCreate = true,
         namespace,
+        cluster,
         setPodMetrics,
         customData,
         userSettingState: tableColumns,
@@ -934,7 +937,7 @@ export const PodsPage = connect<{}, PodPagePropsFromDispatch, PodPageProps>(
           const id = setInterval(updateMetrics, 30 * 1000);
           return () => clearInterval(id);
         }
-      }, [namespace]);
+      }, [namespace, cluster]);
       /* eslint-enable react-hooks/exhaustive-deps */
       return (
         <ListPage
@@ -1031,6 +1034,10 @@ type PodPageProps = {
   selector?: any;
   showTitle?: boolean;
   customData?: any;
+};
+
+type PodPagePropsFromState = {
+  cluster: string;
 };
 
 type PodPagePropsFromDispatch = {

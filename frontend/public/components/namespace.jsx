@@ -1072,10 +1072,6 @@ class NamespaceBarDropdowns_ extends React.Component {
       disabled,
       t,
     } = this.props;
-    if (flagPending(canListNS)) {
-      return null;
-    }
-
     const { loaded, data } = this.props.namespace;
     const model = getModel(useProjects);
     const allNamespacesTitle =
