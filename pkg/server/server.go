@@ -38,7 +38,9 @@ const (
 	tokenizerPageTemplateName = "tokener.html"
 
 	authLoginEndpoint                = "/auth/login"
+	authLoginManagedEndpoint         = "/auth/login/managed"
 	AuthLoginCallbackEndpoint        = "/auth/callback"
+	AuthLoginManagedCallbackEndpoint = "/auth/callback/managed"
 	AuthLoginSuccessEndpoint         = "/"
 	AuthLoginErrorEndpoint           = "/error"
 	authLogoutEndpoint               = "/auth/logout"
@@ -106,6 +108,7 @@ type Server struct {
 	PublicDir            string
 	TectonicVersion      string
 	Auther               *auth.Authenticator
+	Authers              map[string]*auth.Authenticator
 	StaticUser           *auth.User
 	ServiceAccountToken  string
 	KubectlClientID      string
@@ -149,7 +152,6 @@ type Server struct {
 	ProjectAccessClusterRoles string
 	// DO NOT MERGE
 	ManagedClusterURL       *url.URL
-	ManagedClusterToken     string
 	ManagedClusterThanosURL *url.URL
 }
 
@@ -213,10 +215,10 @@ func (s *Server) HTTPHandler() http.Handler {
 	}
 
 	authHandler := func(hf http.HandlerFunc) http.Handler {
-		return authMiddleware(s.Auther, hf)
+		return authMiddleware(s.Authers, hf)
 	}
 	authHandlerWithUser := func(hf func(*auth.User, http.ResponseWriter, *http.Request)) http.Handler {
-		return authMiddlewareWithUser(s.Auther, hf)
+		return authMiddlewareWithUser(s.Authers, hf)
 	}
 
 	if s.authDisabled() {
@@ -234,8 +236,14 @@ func (s *Server) HTTPHandler() http.Handler {
 		handleFunc(authLoginEndpoint, s.Auther.LoginFunc)
 		handleFunc(authLogoutEndpoint, s.Auther.LogoutFunc)
 		handleFunc(AuthLoginCallbackEndpoint, s.Auther.CallbackFunc(fn))
-
 		handle("/api/openshift/delete-token", authHandlerWithUser(s.handleOpenShiftTokenDeletion))
+
+		// FIXME: remove hard-coded cluster name
+		managedAuther := s.Authers["managed"]
+		if managedAuther != nil {
+			handleFunc(authLoginManagedEndpoint, managedAuther.LoginFunc)
+			handleFunc(AuthLoginManagedCallbackEndpoint, managedAuther.CallbackFunc(fn))
+		}
 	}
 
 	handleFunc("/api/", notFoundHandler)
@@ -272,14 +280,9 @@ func (s *Server) HTTPHandler() http.Handler {
 	handle(k8sProxyEndpoint, http.StripPrefix(
 		proxy.SingleJoiningSlash(s.BaseURL.Path, k8sProxyEndpoint),
 		authHandlerWithUser(func(user *auth.User, w http.ResponseWriter, r *http.Request) {
-			// The client can't set headers for WebSockets, so check both the header and query
-			// parameters for the active cluster.
-			cluster := r.Header.Get("X-Cluster")
-			if len(cluster) == 0 {
-				cluster = r.URL.Query().Get("cluster")
-			}
+			cluster := serverutils.GetCluster(r)
 			if cluster == "managed" {
-				r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.ManagedClusterToken))
+				r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", user.Token))
 				managedK8sProxy.ServeHTTP(w, r)
 			} else {
 				r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", user.Token))
@@ -349,9 +352,9 @@ func (s *Server) HTTPHandler() http.Handler {
 		handle(querySourcePath, http.StripPrefix(
 			proxy.SingleJoiningSlash(s.BaseURL.Path, targetAPIPath),
 			authHandlerWithUser(func(user *auth.User, w http.ResponseWriter, r *http.Request) {
-				cluster := r.Header.Get("X-Cluster")
+				cluster := serverutils.GetCluster(r)
 				if cluster == "managed" {
-					r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.ManagedClusterToken))
+					r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", user.Token))
 					managedThanosProxy.ServeHTTP(w, r)
 				} else {
 					r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", user.Token))
@@ -362,9 +365,9 @@ func (s *Server) HTTPHandler() http.Handler {
 		handle(queryRangeSourcePath, http.StripPrefix(
 			proxy.SingleJoiningSlash(s.BaseURL.Path, targetAPIPath),
 			authHandlerWithUser(func(user *auth.User, w http.ResponseWriter, r *http.Request) {
-				cluster := r.Header.Get("X-Cluster")
+				cluster := serverutils.GetCluster(r)
 				if cluster == "managed" {
-					r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.ManagedClusterToken))
+					r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", user.Token))
 					managedThanosProxy.ServeHTTP(w, r)
 				} else {
 					r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", user.Token))
@@ -375,9 +378,9 @@ func (s *Server) HTTPHandler() http.Handler {
 		handle(labelSourcePath, http.StripPrefix(
 			proxy.SingleJoiningSlash(s.BaseURL.Path, targetAPIPath),
 			authHandlerWithUser(func(user *auth.User, w http.ResponseWriter, r *http.Request) {
-				cluster := r.Header.Get("X-Cluster")
+				cluster := serverutils.GetCluster(r)
 				if cluster == "managed" {
-					r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.ManagedClusterToken))
+					r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", user.Token))
 					managedThanosProxy.ServeHTTP(w, r)
 				} else {
 					r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", user.Token))
@@ -391,9 +394,9 @@ func (s *Server) HTTPHandler() http.Handler {
 		handle(rulesSourcePath, http.StripPrefix(
 			proxy.SingleJoiningSlash(s.BaseURL.Path, targetAPIPath),
 			authHandlerWithUser(func(user *auth.User, w http.ResponseWriter, r *http.Request) {
-				cluster := r.Header.Get("X-Cluster")
+				cluster := serverutils.GetCluster(r)
 				if cluster == "managed" {
-					r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.ManagedClusterToken))
+					r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", user.Token))
 					managedThanosProxy.ServeHTTP(w, r)
 				} else {
 					r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", user.Token))
@@ -406,9 +409,9 @@ func (s *Server) HTTPHandler() http.Handler {
 		handle(tenancyQuerySourcePath, http.StripPrefix(
 			proxy.SingleJoiningSlash(s.BaseURL.Path, tenancyTargetAPIPath),
 			authHandlerWithUser(func(user *auth.User, w http.ResponseWriter, r *http.Request) {
-				cluster := r.Header.Get("X-Cluster")
+				cluster := serverutils.GetCluster(r)
 				if cluster == "managed" {
-					r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.ManagedClusterToken))
+					r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", user.Token))
 					managedThanosProxy.ServeHTTP(w, r)
 				} else {
 					r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", user.Token))
@@ -419,9 +422,9 @@ func (s *Server) HTTPHandler() http.Handler {
 		handle(tenancyQueryRangeSourcePath, http.StripPrefix(
 			proxy.SingleJoiningSlash(s.BaseURL.Path, tenancyTargetAPIPath),
 			authHandlerWithUser(func(user *auth.User, w http.ResponseWriter, r *http.Request) {
-				cluster := r.Header.Get("X-Cluster")
+				cluster := serverutils.GetCluster(r)
 				if cluster == "managed" {
-					r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.ManagedClusterToken))
+					r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", user.Token))
 					managedThanosProxy.ServeHTTP(w, r)
 				} else {
 					r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", user.Token))
@@ -433,9 +436,9 @@ func (s *Server) HTTPHandler() http.Handler {
 		handle(tenancyRulesSourcePath, http.StripPrefix(
 			proxy.SingleJoiningSlash(s.BaseURL.Path, tenancyTargetAPIPath),
 			authHandlerWithUser(func(user *auth.User, w http.ResponseWriter, r *http.Request) {
-				cluster := r.Header.Get("X-Cluster")
+				cluster := serverutils.GetCluster(r)
 				if cluster == "managed" {
-					r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.ManagedClusterToken))
+					r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", user.Token))
 					managedThanosProxy.ServeHTTP(w, r)
 				} else {
 					r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", user.Token))
