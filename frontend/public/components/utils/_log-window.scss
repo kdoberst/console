@@ -24,9 +24,16 @@ $color-log-window-divider: $color-log-window-header-bg;
   padding-top: 10px;
 }
 
-.log-window__lines {
+.log-window__lines, .log-window__lines-wrap{
   padding-left: 10px;
   padding-right: 10px;
+}
+
+.log-window__lines {
   white-space: pre;
   width: 0;
+}
+
+.log-window__lines-wrap {
+  white-space: pre-wrap;
 }

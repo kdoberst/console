@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Base64 } from 'js-base64';
-import { Alert, AlertActionLink, Button } from '@patternfly/react-core';
+import { Alert, AlertActionLink, Button, Checkbox } from '@patternfly/react-core';
 import * as _ from 'lodash-es';
 import { Trans, useTranslation } from 'react-i18next';
 import {
@@ -89,8 +89,10 @@ export const LogControls: React.FC<LogControlsProps> = ({
   containerName,
   podLogLinks,
   namespaceUID,
+  toggleWrapLines,
 }) => {
   const { t } = useTranslation();
+  const [wrapLines, setWrapLines] = React.useState(true);
   return (
     <div className="co-toolbar">
       <div className="co-toolbar__group co-toolbar__group--left">
@@ -142,6 +144,18 @@ export const LogControls: React.FC<LogControlsProps> = ({
               </React.Fragment>
             );
           })}
+        <Checkbox
+          label="Wrap lines"
+          id="wrapLogLines"
+          isChecked={wrapLines}
+          onChange={(checked: boolean) => {
+            setWrapLines(checked);
+            toggleWrapLines(checked);
+          }}
+        />
+        <span aria-hidden="true" className="co-action-divider hidden-xs">
+          |
+        </span>
         <a href={currentLogURL} target="_blank" rel="noopener noreferrer">
           <OutlinedWindowRestoreIcon className="co-icon-space-r" />
           {t('logs~Raw')}
@@ -201,6 +215,7 @@ export const ResourceLog: React.FC<ResourceLogProps> = ({
   const [isFullscreen, setIsFullscreen] = React.useState(false);
   const [namespaceUID, setNamespaceUID] = React.useState('');
   const [podLogLinks, setPodLogLinks] = React.useState();
+  const [wrapLines, setWrapLines] = React.useState(true);
   const previousResourceStatus = usePrevious(resourceStatus);
   const previousTotalLineCount = usePrevious(totalLineCount);
   const bufferFull = lines.length === bufferSize;
@@ -391,6 +406,7 @@ export const ResourceLog: React.FC<ResourceLogProps> = ({
           containerName={containerName}
           podLogLinks={podLogLinks}
           namespaceUID={namespaceUID}
+          toggleWrapLines={setWrapLines}
         />
         <LogWindow
           bufferFull={bufferFull}
@@ -399,6 +415,7 @@ export const ResourceLog: React.FC<ResourceLogProps> = ({
           linesBehind={linesBehind}
           status={status}
           updateStatus={setStatus}
+          wrapLines={wrapLines}
         />
       </div>
     </>
@@ -416,6 +433,7 @@ type LogControlsProps = {
   namespaceUID?: string;
   toggleStreaming?: () => void;
   toggleFullscreen: () => void;
+  toggleWrapLines: (wrapLines: boolean) => void;
 };
 
 type ResourceLogProps = {

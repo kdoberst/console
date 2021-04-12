@@ -131,7 +131,11 @@ class LogWindowWithTranslation extends React.PureComponent {
         <div className="log-window__body">
           <div className="log-window__scroll-pane" ref={this._setScrollPane}>
             <div className="log-window__contents" ref={this._setLogContents} style={{ height }}>
-              <div className="log-window__lines">{content}</div>
+              <div
+                className={this.props.wrapLines ? 'log-window__lines-wrap' : 'log-window__lines'}
+              >
+                {content}
+              </div>
             </div>
           </div>
         </div>
@@ -151,7 +155,12 @@ export const LogWindow = withTranslation()(LogWindowWithTranslation);
 LogWindow.propTypes = {
   bufferFull: PropTypes.bool.isRequired,
   lines: PropTypes.array.isRequired,
+  wrapLines: PropTypes.bool,
   linesBehind: PropTypes.number.isRequired,
   status: PropTypes.string.isRequired,
   updateStatus: PropTypes.func.isRequired,
+};
+
+LogWindow.defaultProps = {
+  wrapLines: true,
 };
