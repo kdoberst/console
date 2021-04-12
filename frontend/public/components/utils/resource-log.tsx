@@ -145,7 +145,7 @@ export const LogControls: React.FC<LogControlsProps> = ({
             );
           })}
         <Checkbox
-          label="Wrap lines"
+          label={t('logs~Wrap lines')}
           id="wrapLogLines"
           isChecked={wrapLines}
           onChange={(checked: boolean) => {
