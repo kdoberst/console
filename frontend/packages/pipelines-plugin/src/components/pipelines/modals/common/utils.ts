@@ -6,8 +6,8 @@ import {
   PipelineKind,
   TektonResource,
   PipelineRunKind,
-  PipelineRunInlineResource,
-  PipelineRunInlineResourceParam,
+  PipelineRunEmbeddedResource,
+  PipelineRunEmbeddedResourceParam,
   PipelineRunReferenceResource,
   PipelineRunResource,
   VolumeClaimTemplateType,
@@ -16,7 +16,11 @@ import {
 import { getPipelineRunParams, getPipelineRunWorkspaces } from '../../../../utils/pipeline-utils';
 import { TektonResourceLabel, VolumeTypes, preferredNameAnnotation } from '../../const';
 import { CREATE_PIPELINE_RESOURCE, initialResourceFormValues } from './const';
-import { CommonPipelineModalFormikValues, PipelineModalFormResource } from './types';
+import {
+  CommonPipelineModalFormikValues,
+  PipelineModalFormResource,
+  PipelineModalFormWorkspace,
+} from './types';
 
 /**
  * Migrates a PipelineRun from one version to another to support auto-upgrades with old (and invalid) PipelineRuns.
@@ -172,17 +176,26 @@ export const convertPipelineToModalData = (
         type: resource.type,
       },
     })),
-    workspaces: (pipeline.spec.workspaces || []).map((workspace: TektonWorkspace) => ({
-      ...workspace,
-      type: preselectPVC ? VolumeTypes.PVC : VolumeTypes.EmptyDirectory,
-      data: preselectPVC ? getDefaultPVC(preselectPVC) : { emptyDir: {} },
-    })),
+    workspaces: (pipeline.spec.workspaces || []).map(
+      (workspace: TektonWorkspace): PipelineModalFormWorkspace => ({
+        ...workspace,
+        ...(preselectPVC
+          ? {
+              type: VolumeTypes.PVC,
+              data: getDefaultPVC(preselectPVC),
+            }
+          : {
+              type: VolumeTypes.EmptyDirectory,
+              data: { emptyDir: {} },
+            }),
+      }),
+    ),
   };
 };
 
 export const convertMapToNameValueArray = (map: {
   [key: string]: any;
-}): PipelineRunInlineResourceParam[] => {
+}): PipelineRunEmbeddedResourceParam[] => {
   return Object.keys(map).map((name) => {
     const value = map[name];
     return { name, value };
@@ -197,7 +210,7 @@ const convertResources = (resource: PipelineModalFormResource): PipelineRunResou
         params: convertMapToNameValueArray(resource.data.params),
         type: resource.data.type,
       },
-    } as PipelineRunInlineResource;
+    } as PipelineRunEmbeddedResource;
   }
 
   return {
