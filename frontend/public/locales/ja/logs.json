@@ -12,6 +12,5 @@
   "Some lines have been abridged because they are exceptionally long.": "一部の行は非常に長いため、短縮されています。",
   "To view unabridged log content, you can either <2>open the raw file in another window</2> or <6>download it</6>.": "短縮されていないログコンテンツを表示するには、 <2>別のウィンドウで未加工ファイルを開く</2>か、または<6>これをダウンロード</6>します。",
   "The logs for this {{resourceKind}} may be stale.": "この {{resourceKind}} のログは古くなっている可能性があります。",
-  "Refresh": "更新",
-  "Wrap lines": "Wrap lines"
+  "Refresh": "更新"
 }

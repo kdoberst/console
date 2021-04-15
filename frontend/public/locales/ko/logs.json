@@ -12,6 +12,5 @@
   "Some lines have been abridged because they are exceptionally long.": "일부 라인은 매우 길기 때문에 단축되어 있습니다.",
   "To view unabridged log content, you can either <2>open the raw file in another window</2> or <6>download it</6>.": "단축되지 않은 로그 내용을 보려면 <2> 다른 창에서 원시 파일 열기</2> 또는<6>다운로드</6>를 수행합니다.",
   "The logs for this {{resourceKind}} may be stale.": "{{resourceKind}}의 로그는 오래되었을 수 있습니다.",
-  "Refresh": "새로 고침",
-  "Wrap lines": "Wrap lines"
+  "Refresh": "새로 고침"
 }
