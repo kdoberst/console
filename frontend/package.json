@@ -18,6 +18,10 @@
     "coverage": "jest --coverage .",
     "eslint": "eslint --ext .js,.jsx,.ts,.tsx,.json,.gql,.graphql --color",
     "lint": "NODE_OPTIONS=--max-old-space-size=4096 yarn eslint .",
+    "prettier": "prettier  --ignore-path ./.eslintignore --check",
+    "lint:css": "stylelint --ignore-path ./.eslintignore ",
+    "lint:css:all": "yarn run lint:css './**/*.+(css|scss)'",
+    "lint:scss:fix:all": "yarn run lint:css -- --fix './**/*.+(css|scss)'",
     "gherkin-lint": "./node_modules/.bin/gherkin-lint -c ./.gherkin-lintrc ./packages/*/integration-tests/features",
     "test": "jest",
     "debug-test": "node --inspect-brk node_modules/.bin/jest --runInBand",
@@ -298,6 +302,8 @@
     "redux-mock-store": "^1.5.3",
     "resolve-url-loader": "2.x",
     "sass-loader": "6.x",
+    "stylelint": "^13.13.1",
+    "stylelint-config-prettier": "^8.0.2",
     "style-loader": "^0.23.1",
     "thread-loader": "1.x",
     "ts-jest": "21.x",
@@ -321,14 +327,14 @@
     "ua-parser-js": "^0.7.24",
     "@types/jest": "21.x",
     "glob-parent": "^5.1.2",
-    "postcss": "^8.2.10"
+    "postcss": "^7.0.35"
   },
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged"
     }
   },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx,json,gql,graphql}": "eslint --color --fix"
+  "stylelint": {
+    "extends": "stylelint-config-prettier"
   }
 }
