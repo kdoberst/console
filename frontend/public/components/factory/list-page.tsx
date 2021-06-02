@@ -167,6 +167,7 @@ export type FireManProps = {
   helpText?: React.ReactNode;
   title: string;
   autoFocus?: boolean;
+  cluster?: string;
 };
 
 type FireManState = {
@@ -197,7 +198,7 @@ export const FireMan = connect<{}, { filterList: typeof filterList }, FireManPro
       this.state = { reduxIDs };
     }
 
-    UNSAFE_componentWillReceiveProps({ resources, cluster }) {
+    UNSAFE_componentWillReceiveProps({ resources, cluster }: FireManProps) {
       const reduxIDs = resources.map((r) =>
         makeReduxID(
           kindObj(r.kind),

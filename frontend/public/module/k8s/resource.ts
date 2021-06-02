@@ -207,6 +207,7 @@ export const k8sWatch = (
     resourceVersion?: string;
     ns?: string;
     fieldSelector?: string;
+    cluster?: string;
   } = {},
   wsOptions: {
     [key: string]: any;
