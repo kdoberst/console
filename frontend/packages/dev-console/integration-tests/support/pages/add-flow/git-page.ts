@@ -78,9 +78,8 @@ export const gitPage = {
     cy.get(gitPO.createNewApp)
       .first()
       .click();
-    cy.get(gitPO.newAppName)
-      .clear()
-      .type(newAppName);
+    cy.get(gitPO.newAppName).clear();
+    cy.get(gitPO.newAppName).type(newAppName);
   },
   enterComponentName: (name: string) => {
     app.waitForLoad();

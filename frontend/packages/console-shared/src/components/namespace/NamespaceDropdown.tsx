@@ -72,6 +72,7 @@ const Filter: React.FC<{
     // @ts-ignore
     <MenuInput>
       <TextInput
+        data-test="dropdown-text-filter"
         autoFocus
         value={filterText}
         aria-label={
@@ -323,6 +324,7 @@ const NamespaceMenu: React.FC<{
         onSetFavorite(itemID, !isCurrentFavorite);
       }}
       activeItemId={selected}
+      data-test="namespace-dropdown-menu"
     >
       {/*
         //@ts-ignore */}
