@@ -33,6 +33,20 @@ export const namespacedPrefixes = [
 
 export const stripBasePath = (path: string): string => path.replace(basePathPattern, '/');
 
+export const getCluster = (path: string): string => {
+  const strippedPath = stripBasePath(path);
+  const split = strippedPath.split('/').filter((x) => x);
+
+  if (
+    split[0] === 'k8s' &&
+    !['cluster', 'ns', 'all-namespaces'].some((cluster) => cluster === split[1])
+  ) {
+    return split[1];
+  }
+
+  return;
+};
+
 export const getNamespace = (path: string): string => {
   path = stripBasePath(path);
   const split = path.split('/').filter((x) => x);

@@ -147,16 +147,26 @@ export const getPVCMetric = (pvc: K8sResourceKind, metric: string): number => {
   return metrics?.[metric]?.[pvc.metadata.namespace]?.[pvc.metadata.name] ?? 0;
 };
 
+/* ******************** */
+// KKD here is how the new urls are set
 export const formatNamespaceRoute = (
   activeNamespace,
   originalPath,
   location?,
   forceList?: boolean,
+  activeCluster?: string,
 ) => {
-  let path = originalPath.substr(window.SERVER_FLAGS.basePath.length);
+  // console.log("KKD *************************** ")
+  const path = originalPath.substr(window.SERVER_FLAGS.basePath.length);
 
   let parts = path.split('/').filter((p) => p);
   const prefix = parts.shift();
+
+  //   console.log('KKD activeNamespace', activeNamespace)
+  // console.log("KKD location:", location)
+  //   console.log("KKD path: ", path)
+  //   console.log('KKD Prefeix', prefix)
+  //   console.log("KKD parts (aka split path)", parts)
 
   let previousNS;
   if (parts[0] === 'all-namespaces') {
@@ -167,15 +177,18 @@ export const formatNamespaceRoute = (
     previousNS = parts.shift();
   }
 
-  if (!previousNS) {
-    return originalPath;
-  }
+  // if (!previousNS) {
+  //   console.log("KKD no previous namespace ... returning original path", originalPath)
+
+  //  // return originalPath;
+  // }
 
   if (
-    (previousNS !== activeNamespace &&
+    previousNS &&
+    ((previousNS !== activeNamespace &&
       (parts[1] !== 'new' || activeNamespace !== ALL_NAMESPACES_KEY)) ||
-    (activeNamespace === ALL_NAMESPACES_KEY && parts[1] === 'new') ||
-    forceList
+      (activeNamespace === ALL_NAMESPACES_KEY && parts[1] === 'new') ||
+      forceList)
   ) {
     // a given resource will not exist when we switch namespaces, so pop off the tail end
     parts = parts.slice(0, 1);
@@ -184,17 +197,40 @@ export const formatNamespaceRoute = (
   const namespacePrefix =
     activeNamespace === ALL_NAMESPACES_KEY ? 'all-namespaces' : `ns/${activeNamespace}`;
 
-  path = `/${prefix}/${namespacePrefix}`;
+  // Add logic for clusters here
+  // get from URL
+  // get from redux??
+  // Naa - let's get the wanted cluster from elsewhere.  This just makes the url
+
+  // console.log("KKD starting cluster path:",parts)
+
+  let newPath = `/${prefix}`;
+
+  // FIXME (kdoberst) Might need to check beyond starting with k8s
+  if (activeCluster && prefix === 'k8s') {
+    // Add / modify cluster
+    if (!['cluster', 'ns', 'all-namespaces'].some((cluster) => cluster === parts[0])) {
+      // current cluster is in the URL
+      parts.shift();
+    }
+    newPath += `/${activeCluster}`;
+  }
+
+  if (previousNS) {
+    newPath += `/${namespacePrefix}`;
+  }
+
   if (parts.length) {
-    path += `/${parts.join('/')}`;
+    newPath += `/${parts.join('/')}`;
   }
 
   if (location) {
-    path += `${location.search}${location.hash}`;
+    newPath += `${location.search}${location.hash}`;
   }
 
-  return path;
+  return newPath;
 };
+/* ******************** */
 
 export const setCurrentLocation = (location: string) =>
   action(ActionType.SetCurrentLocation, { location });
