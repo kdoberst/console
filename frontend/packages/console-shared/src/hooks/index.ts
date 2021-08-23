@@ -25,6 +25,7 @@ export * from './hpa-hooks';
 export * from './usePinnedResources';
 export * from './useActivePerspective';
 export * from './useActiveNamespace';
+export * from './useActiveCluster';
 export * from './useIsMobile';
 export * from './useResizeObserver';
 export * from './useBoundingClientRect';

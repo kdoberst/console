@@ -156,17 +156,10 @@ export const formatNamespaceRoute = (
   forceList?: boolean,
   activeCluster?: string,
 ) => {
-  // console.log("KKD *************************** ")
   const path = originalPath.substr(window.SERVER_FLAGS.basePath.length);
 
   let parts = path.split('/').filter((p) => p);
   const prefix = parts.shift();
-
-  //   console.log('KKD activeNamespace', activeNamespace)
-  // console.log("KKD location:", location)
-  //   console.log("KKD path: ", path)
-  //   console.log('KKD Prefeix', prefix)
-  //   console.log("KKD parts (aka split path)", parts)
 
   let previousNS;
   if (parts[0] === 'all-namespaces') {
@@ -176,12 +169,6 @@ export const formatNamespaceRoute = (
     parts.shift();
     previousNS = parts.shift();
   }
-
-  // if (!previousNS) {
-  //   console.log("KKD no previous namespace ... returning original path", originalPath)
-
-  //  // return originalPath;
-  // }
 
   if (
     previousNS &&
@@ -196,13 +183,6 @@ export const formatNamespaceRoute = (
 
   const namespacePrefix =
     activeNamespace === ALL_NAMESPACES_KEY ? 'all-namespaces' : `ns/${activeNamespace}`;
-
-  // Add logic for clusters here
-  // get from URL
-  // get from redux??
-  // Naa - let's get the wanted cluster from elsewhere.  This just makes the url
-
-  // console.log("KKD starting cluster path:",parts)
 
   let newPath = `/${prefix}`;
 

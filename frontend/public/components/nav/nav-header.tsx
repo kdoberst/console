@@ -66,7 +66,6 @@ const NavHeader: React.FC<NavHeaderProps> = ({ onPerspectiveSelected }) => {
     const oldPath = window.location.pathname;
     const newPath = formatNamespaceRoute(activeNamespace, oldPath, window.location, true, cluster); // currently new path and old path are the same
     if (newPath !== oldPath) {
-      // console.log("KKD NEW PATH RECOGNIZED")
       history.pushPath(newPath);
     }
     // KKD Here is where local storage is set
@@ -143,7 +142,6 @@ const NavHeader: React.FC<NavHeaderProps> = ({ onPerspectiveSelected }) => {
   );
 
   // KKD: This is where the cluster switcher is located
-  // console.log("KKD building cluster", clusterItems)
   return (
     <>
       {clusterItems.length > 0 && (

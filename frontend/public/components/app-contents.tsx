@@ -656,6 +656,7 @@ const AppContents: React.FC<{}> = () => {
 
               {/* START of new links */}
               <Route path="/k8s/:cluster?/cluster/:plural" exact component={ResourceListPage} />
+
               <Route path="/k8s/:cluster?/cluster/:plural/~new" exact component={CreateResource} />
               <Route path="/k8s/:cluster?/cluster/:plural/:name" component={ResourceDetailsPage} />
               <LazyRoute
