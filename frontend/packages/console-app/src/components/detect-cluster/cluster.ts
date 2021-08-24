@@ -10,6 +10,7 @@ import { history } from '@console/internal/components/utils/router';
 import { getActiveCluster } from '@console/internal/reducers/ui';
 import { RootState } from '@console/internal/redux';
 import { useActiveNamespace } from '@console/shared';
+import { STORAGE_PREFIX } from '@console/shared/src/constants/common';
 
 export const useValuesForClusterContext = () => {
   const { pathname } = useLocation();
@@ -26,16 +27,12 @@ export const useValuesForClusterContext = () => {
   const [activeNamespace] = useActiveNamespace();
   const reduxCluster = useSelector((state: RootState) => getActiveCluster(state));
   React.useEffect(() => {
-    const split = pathname.split('/').filter((x) => x);
-
     if (urlCluster && window.SERVER_FLAGS.clusters.includes(urlCluster)) {
       if (urlCluster !== reduxCluster) {
         dispatch(setActiveCluster(urlCluster));
-        // FIXME (kdoberst) "bridge" should be pulled from a variable
-        // Also, unsure if this is actually necessary
-        window.localStorage.setItem(`bridge/last-cluster`, urlCluster);
+        window.localStorage.setItem(`${STORAGE_PREFIX}/last-cluster`, urlCluster);
       }
-    } else if (reduxCluster && split[0] === 'k8s') {
+    } else if (reduxCluster) {
       const newPath = formatNamespaceRoute(
         activeNamespace,
         window.location.pathname,
@@ -43,13 +40,15 @@ export const useValuesForClusterContext = () => {
         true,
         reduxCluster,
       );
-      history.pushPath(newPath);
+
+      if (newPath !== window.location.pathname) {
+        history.pushPath(newPath);
+      }
     }
   }, [activeNamespace, dispatch, pathname, reduxCluster, urlCluster]);
 
   return {
-    // KKD in theory we could use urlCluster || reduxUrl ... maybe avoid double load
-    cluster: urlCluster,
+    cluster: urlCluster || reduxCluster,
     setCluster,
     loaded: true,
   };

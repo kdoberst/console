@@ -37,10 +37,7 @@ export const getCluster = (path: string): string => {
   const strippedPath = stripBasePath(path);
   const split = strippedPath.split('/').filter((x) => x);
 
-  if (
-    split[0] === 'k8s' &&
-    !['cluster', 'ns', 'all-namespaces'].some((cluster) => cluster === split[1])
-  ) {
+  if (split[0] === 'cluster') {
     return split[1];
   }
 

@@ -54,8 +54,6 @@ const NavHeader: React.FC<NavHeaderProps> = ({ onPerspectiveSelected }) => {
   }, [isPerspectiveDropdownOpen]);
   const fireTelemetryEvent = useTelemetry();
 
-  // KKD here is where the onclick happens including the new URL
-  // KKD need to copy this logic into the loading
   const onClusterSelect = (event, cluster: string): void => {
     event.preventDefault();
     setClusterDropdownOpen(false);
@@ -68,7 +66,7 @@ const NavHeader: React.FC<NavHeaderProps> = ({ onPerspectiveSelected }) => {
     if (newPath !== oldPath) {
       history.pushPath(newPath);
     }
-    // KKD Here is where local storage is set
+
     window.localStorage.setItem(`${STORAGE_PREFIX}/last-cluster`, cluster);
   };
 
@@ -141,7 +139,6 @@ const NavHeader: React.FC<NavHeaderProps> = ({ onPerspectiveSelected }) => {
     [activePerspective, perspectiveExtensions],
   );
 
-  // KKD: This is where the cluster switcher is located
   return (
     <>
       {clusterItems.length > 0 && (

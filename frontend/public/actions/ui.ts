@@ -147,8 +147,6 @@ export const getPVCMetric = (pvc: K8sResourceKind, metric: string): number => {
   return metrics?.[metric]?.[pvc.metadata.namespace]?.[pvc.metadata.name] ?? 0;
 };
 
-/* ******************** */
-// KKD here is how the new urls are set
 export const formatNamespaceRoute = (
   activeNamespace,
   originalPath,
@@ -159,6 +157,22 @@ export const formatNamespaceRoute = (
   const path = originalPath.substr(window.SERVER_FLAGS.basePath.length);
 
   let parts = path.split('/').filter((p) => p);
+
+  if (parts[0] === 'cluster') {
+    // this is the new url pattern starting with /cluster/:clusterName
+    // removing these because they will be added back later
+    parts.splice(0, 2);
+  }
+
+  let clusterPathPart = '';
+
+  const newClusterRoutes = ['/k8s/all-namespaces', '/k8s/cluster', '/k8s/ns'];
+
+  if (activeCluster && newClusterRoutes.includes(`/${parts[0]}/${parts[1]}`)) {
+    // TODO put feature gate HERE.
+    clusterPathPart = `/cluster/${activeCluster}`;
+  }
+
   const prefix = parts.shift();
 
   let previousNS;
@@ -184,17 +198,7 @@ export const formatNamespaceRoute = (
   const namespacePrefix =
     activeNamespace === ALL_NAMESPACES_KEY ? 'all-namespaces' : `ns/${activeNamespace}`;
 
-  let newPath = `/${prefix}`;
-
-  // FIXME (kdoberst) Might need to check beyond starting with k8s
-  if (activeCluster && prefix === 'k8s') {
-    // Add / modify cluster
-    if (!['cluster', 'ns', 'all-namespaces'].some((cluster) => cluster === parts[0])) {
-      // current cluster is in the URL
-      parts.shift();
-    }
-    newPath += `/${activeCluster}`;
-  }
+  let newPath = `/${prefix || ''}`;
 
   if (previousNS) {
     newPath += `/${namespacePrefix}`;
@@ -208,9 +212,8 @@ export const formatNamespaceRoute = (
     newPath += `${location.search}${location.hash}`;
   }
 
-  return newPath;
+  return `${clusterPathPart}${newPath}`;
 };
-/* ******************** */
 
 export const setCurrentLocation = (location: string) =>
   action(ActionType.SetCurrentLocation, { location });
