@@ -1,7 +1,12 @@
 import * as _ from 'lodash-es';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Select, SelectOption } from '@patternfly/react-core';
+import { Tile, Select, SelectOption, Flex } from '@patternfly/react-core';
+
+import { ExternalLink } from '@console/internal/components/utils';
+
+import UpdateControlPlaneIcon from '../../imgs/icons/update-control-plane';
+import UpdateFullClusterIcon from '../../imgs/icons/update-full-cluster';
 
 import { ClusterVersionModel } from '../../models';
 import { HandlePromiseProps, withHandlePromise } from '../utils';
@@ -23,6 +28,7 @@ import {
 } from '../factory/modal';
 import { ClusterNotUpgradeableAlert } from '../cluster-settings/cluster-settings';
 
+type upgradeValues = 'full' | 'controlplane';
 const ClusterUpdateModal = withHandlePromise((props: ClusterUpdateModalProps) => {
   const { cancel, close, cv, errorMessage, handlePromise, inProgress } = props;
   const clusterUpgradeableFalse = !!getConditionUpgradeableFalse(cv);
@@ -36,6 +42,8 @@ const ClusterUpdateModal = withHandlePromise((props: ClusterUpdateModalProps) =>
       ? currentMinorVersionPatchUpdate?.version
       : availableSortedUpdates[0]?.version) || '',
   );
+  const [upgradeType, setUpgradeType] = React.useState<upgradeValues | null>(null);
+
   const [error, setError] = React.useState(errorMessage);
   const [isOpen, setIsOpen] = React.useState(false);
   const onToggle = () => setIsOpen(!isOpen);
@@ -73,15 +81,21 @@ const ClusterUpdateModal = withHandlePromise((props: ClusterUpdateModalProps) =>
 
   return (
     <form onSubmit={submit} name="form" className="modal-content modal-content--no-inner-scroll">
-      <ModalTitle>{t('public~Update cluster')}</ModalTitle>
+      <ModalTitle>{t('public~Update version')}</ModalTitle>
       <ModalBody>
         {clusterUpgradeableFalse && <ClusterNotUpgradeableAlert cv={cv} />}
         <div className="form-group">
+          <p>
+            Select a channel that reflects your desired version.Critical Security updates will be
+            delivered to any vulnerable channels.
+          </p>
+        </div>
+        {/* <div className="form-group">
           <label>{t('public~Current version')}</label>
           <p>{currentVersion}</p>
-        </div>
+        </div> */}
         <div className="form-group">
-          <label id="version-label">{t('public~Select new version')}</label>
+          <label id="version-label">{t('public~Version')}</label>
           <Select
             aria-labelledby="version-label"
             onToggle={onToggle}
@@ -93,6 +107,40 @@ const ClusterUpdateModal = withHandlePromise((props: ClusterUpdateModalProps) =>
             {options}
           </Select>
         </div>
+        <div className="form-group">
+          <label>Select an update strategy</label>
+          <p>
+            <ExternalLink href="https://redhat.com" text="Learn more about update strategy" />
+          </p>
+        </div>
+        <Flex>
+          <Flex flex={{ default: 'flex_1' }}>
+            <Tile
+              title="Full Cluster Update"
+              icon={<UpdateFullClusterIcon />}
+              isStacked
+              isDisplayLarge
+              isSelected={upgradeType === 'full'}
+              onClick={() => setUpgradeType('full')}
+            >
+              Both of master and worker nodes are updated at once. This might take longer, so make
+              sure you allocate enough time for the maintenance schedule.
+            </Tile>
+          </Flex>
+          <Flex flex={{ default: 'flex_1' }}>
+            <Tile
+              title="Control Plane Update Only"
+              icon={<UpdateControlPlaneIcon />}
+              isStacked
+              isSelected={upgradeType === 'controlplane'}
+              isDisplayLarge
+              onClick={() => setUpgradeType('controlplane')}
+            >
+              Only master nodes are updated at this time. Worker node update will be paused for 60
+              days to accommodate your maintenance schedule. You can resume update any time.
+            </Tile>
+          </Flex>
+        </Flex>
       </ModalBody>
       <ModalSubmitFooter
         errorMessage={error}
@@ -100,7 +148,7 @@ const ClusterUpdateModal = withHandlePromise((props: ClusterUpdateModalProps) =>
         submitText={t('public~Update')}
         cancelText={t('public~Cancel')}
         cancel={cancel}
-        submitDisabled={!desiredVersion}
+        submitDisabled={!desiredVersion || !upgradeType}
       />
     </form>
   );
