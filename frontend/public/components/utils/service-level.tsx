@@ -205,9 +205,11 @@ export const ServiceLevel: React.FC<{ clusterID: string; children: React.ReactNo
   clusterID,
   children,
 }) => {
-  const { hasSecretAccess, loadingSecret, loadingServiceLevel } = useGetServiceLevel(clusterID);
+  const { hasSecretAccess, loadingSecret, loadingServiceLevel, level } = useGetServiceLevel(
+    clusterID,
+  );
 
-  if (!showServiceLevel(clusterID)) {
+  if (!showServiceLevel(clusterID) || !level || level === null) {
     return null;
   }
   if (loadingSecret || !hasSecretAccess) {
